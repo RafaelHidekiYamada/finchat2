@@ -1,0 +1,22 @@
+name: finchat
+
+services:
+  api:
+    build:
+      context: .
+    image: finchat-api:cp1
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Configure SECRET_KEY no arquivo .env}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      # SQLite SQL persistido no volume, independente do arquivo local.
+      DATABASE_URL: sqlite:////app/data/finchat.db
+      TZ: America/Sao_Paulo
+    ports:
+      - "127.0.0.1:${FINCHAT_PORT:-8080}:8000"
+    volumes:
+      - finchat_data:/app/data
+    restart: unless-stopped
+    stop_grace_period: 15s
+
+volumes:
+  finchat_data:
