@@ -19,9 +19,9 @@ _DUMMY_HASH = hash_password("Credencial fictícia para verificação de tempo")
 
 
 def ensure_default_categories(db: Session, user_id: int) -> None:
-    existing = {(row.name, row.type) for row in db.scalars(select(Category).where(Category.user_id == user_id))}
+    existing = {(row.name.lower(), row.type) for row in db.scalars(select(Category).where(Category.user_id == user_id))}
     for name, category_type in DEFAULT_CATEGORIES:
-        if (name, category_type) not in existing:
+        if (name.lower(), category_type) not in existing:
             db.add(Category(user_id=user_id, name=name, type=category_type))
     db.flush()
 

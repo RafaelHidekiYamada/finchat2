@@ -1,0 +1,6 @@
+OK - Projeto Docker temporario iniciado com volume proprio e porta dinamica.
+OK - Usuario sem root, volume gravavel, fuso UTC-03 e .env fora da imagem.
+OK - Recriacao completa preservou contagens, valores e identificadores financeiros.
+Contagens preservadas: {"users": 2, "bank_accounts": 2, "categories": 14, "chat_command_logs": 0, "partners": 2, "bank_connections": 2, "contracts": 2, "transactions": 5}
+OK - Nenhuma diferenca entre modelos e migrations apos recriacao.
+OK - Somente o projeto temporario foi removido. Ambiente finchat existente preservado.

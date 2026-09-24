@@ -1,0 +1,212 @@
+VALIDACAO DE BANCO FINCHAT CP1 - 2026-09-09T02:16:54.906062+00:00
+Execucao isolada: nenhum banco local ou volume existente foi usado.
+
+
+=== SQLite temporario ===
+$ python -m alembic upgrade head [banco temporario]
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial, Cria as oito entidades do FinChat CP1.
+$ python -m alembic current
+0001_initial (head)
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+$ python -m alembic check
+No new upgrade operations detected.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.schemas
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.tables
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.types
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.constraints
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.defaults
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.comments
+$ python -m app.seed [execucao 1]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [execucao 1]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "sqlite", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"]}
+$ python -m app.seed [execucao 2]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [execucao 2]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "sqlite", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"]}
+PASS: seed repetido manteve contagens, saldos e integridade identicos.
+$ python -m alembic downgrade base [somente banco temporario]
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0001_initial -> , Cria as oito entidades do FinChat CP1.
+$ python [inspecao depois de downgrade]
+PASS: todas as oito tabelas removidas; apenas alembic_version permanece
+$ python -m alembic upgrade head [recriacao]
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial, Cria as oito entidades do FinChat CP1.
+$ python -m alembic check [depois da recriacao]
+No new upgrade operations detected.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.schemas
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.tables
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.types
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.constraints
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.defaults
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.comments
+$ python -m app.seed [depois da recriacao]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [depois da recriacao]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "sqlite", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"]}
+PASS: ciclo completo upgrade, seed idempotente, downgrade e upgrade.
+$ docker run postgres:16-alpine [container exclusivo; dados tmpfs; porta local efemera; senha temporaria por ambiente]
+359bec28cf8c56b38bb1b71adac2612ad0cfd071f6ff8548e8519d106f6f7813
+PASS: PostgreSQL temporario pronto.
+$ docker exec [container temporario] psql SELECT version()
+PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+
+=== PostgreSQL 16 real temporario em Docker ===
+$ python -m alembic upgrade head [banco temporario]
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial, Cria as oito entidades do FinChat CP1.
+$ python -m alembic current
+0001_initial (head)
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+$ python -m alembic check
+No new upgrade operations detected.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.schemas
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.tables
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.types
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.constraints
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.defaults
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.comments
+INFO  [alembic.ddl.postgresql] Detected sequence named 'partners_id_seq' as owned by integer column 'partners(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'bank_accounts_id_seq' as owned by integer column 'bank_accounts(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'users_id_seq' as owned by integer column 'users(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'bank_connections_id_seq' as owned by integer column 'bank_connections(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'transactions_id_seq' as owned by integer column 'transactions(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'categories_id_seq' as owned by integer column 'categories(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'contracts_id_seq' as owned by integer column 'contracts(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'chat_command_logs_id_seq' as owned by integer column 'chat_command_logs(id)', assuming SERIAL and omitting
+$ python -m app.seed [execucao 1]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [execucao 1]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "postgresql", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"]}
+$ python -m app.seed [execucao 2]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [execucao 2]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "postgresql", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"]}
+PASS: seed repetido manteve contagens, saldos e integridade identicos.
+$ python -m alembic downgrade base [somente banco temporario]
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0001_initial -> , Cria as oito entidades do FinChat CP1.
+$ python [inspecao depois de downgrade]
+PASS: todas as oito tabelas removidas; apenas alembic_version permanece
+$ python -m alembic upgrade head [recriacao]
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial, Cria as oito entidades do FinChat CP1.
+$ python -m alembic check [depois da recriacao]
+No new upgrade operations detected.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.schemas
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.tables
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.types
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.constraints
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.defaults
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.comments
+INFO  [alembic.ddl.postgresql] Detected sequence named 'users_id_seq' as owned by integer column 'users(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'categories_id_seq' as owned by integer column 'categories(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'contracts_id_seq' as owned by integer column 'contracts(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'chat_command_logs_id_seq' as owned by integer column 'chat_command_logs(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'partners_id_seq' as owned by integer column 'partners(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'bank_connections_id_seq' as owned by integer column 'bank_connections(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'transactions_id_seq' as owned by integer column 'transactions(id)', assuming SERIAL and omitting
+INFO  [alembic.ddl.postgresql] Detected sequence named 'bank_accounts_id_seq' as owned by integer column 'bank_accounts(id)', assuming SERIAL and omitting
+$ python -m app.seed [depois da recriacao]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [depois da recriacao]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "postgresql", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"]}
+PASS: ciclo completo upgrade, seed idempotente, downgrade e upgrade.
+$ python -m alembic downgrade base [preparacao exclusiva da suite PostgreSQL]
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0001_initial -> , Cria as oito entidades do FinChat CP1.
+
+=== Suite completa em PostgreSQL real ===
+Copia temporaria dos testes: asserts originais identicos; somente fixture db_session passa de SQLite em memoria para PostgreSQL temporario. Cria e remove as tabelas por teste. App e testes originais preservados.
+$ python -m pytest -q [copia temporaria; fixture PostgreSQL real; JUnit docs/evidencias/pytest-postgresql.xml]
+........................................................................ [ 88%]
+.........                                                                [100%]
+============================== warnings summary ===============================
+..\..\..\..\..\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\rafae\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+..\..\..\..\..\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\rafae\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+81 passed, 2 warnings in 56.31s
+RESULTADO DA RODADA INICIAL: todas as validacoes de banco aprovadas.
+$ docker rm --force --volumes [somente container temporario criado por esta validacao]
+finchat-cp1-validation-pg-a9fb5463d9
+PASS: container PostgreSQL temporario removido; dados eram tmpfs, sem volume persistente criado.
+PASS: diretorio temporario exclusivo removido. Banco local e volume Docker original preservados.
+
+REVALIDACAO DO CODIGO FINAL - 2026-09-09T02:20:13.125594+00:00
+Migrations SQLite/PostgreSQL e seed inicial ja aprovados acima. Esta rodada repete regressao seed e suite completa PostgreSQL apos correcao em categorias.
+$ docker run postgres:16-alpine [container exclusivo; dados tmpfs; porta local efemera; senha temporaria por ambiente]
+b9c247e6cd6908284e6eb86f8df8478fe46ac5db16884662853d4bdcbb80f6e6
+PASS: PostgreSQL temporario pronto.
+$ docker exec [container temporario] psql SELECT version()
+PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+Codigo final: hashes SHA256 para rastreabilidade
+app/services/auth.py: 57f24587b31d7d99f9ae79942b28d16aa2cb76ca44a8225eebef820cc44d68d9
+app/services/integrations.py: 42f662f7953bc2176f65343618f1fcfb729e0a675e75084a4dfe3d0a9fb25615
+app/seed.py: ddf8c364fb00740144b806193d4eaaff2f1f25b46df82e3690245d2b76aa376f
+tests/test_integracoes_e_docs.py: 3346a20ad79f8eb8374969593823066b7b2b8774e60eb18109812fb60610ae5d
+$ python -m alembic upgrade head [preparacao do novo banco exclusivo]
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial, Cria as oito entidades do FinChat CP1.
+$ python -m app.seed [codigo final]
+Seed concluído: dados fictícios CPF/CNPJ, categorias, contas, conexões, transações, parceiros e contratos.
+Usuários: cpf@finchat.demo e empresa@finchat.demo
+$ python check_database.py [codigo final: inclui Transporte -> transporte e seed duas vezes]
+{"balances": {"CNPJ": "2950.00", "CPF": "3925.00"}, "centavos": "0.10 + 0.20 - 0.10 = 0.20; round-trip exato", "counts": {"bank_accounts": 2, "bank_connections": 2, "categories": 14, "chat_command_logs": 0, "contracts": 2, "partners": 2, "transactions": 5, "users": 2}, "dialect": "postgresql", "integridade": "OK", "restricoes": ["valor positivo", "chave estrangeira", "email unico", "enum de transacao", "previsao nao negativa", "periodo de contrato", "exclusao de usuario referenciado"], "seed_apos_alteracao_de_caixa": "PASS: Transporte renomeada para transporte; seed repetido duas vezes sem duplicar categoria, transacao ou saldo"}
+$ python -m alembic downgrade base [preparacao exclusiva da suite PostgreSQL]
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0001_initial -> , Cria as oito entidades do FinChat CP1.
+
+=== Suite completa em PostgreSQL real ===
+Copia temporaria dos testes: asserts originais identicos; somente fixture db_session passa de SQLite em memoria para PostgreSQL temporario. Cria e remove as tabelas por teste. App e testes originais preservados.
+$ python -m pytest -q [copia temporaria; fixture PostgreSQL real; JUnit docs/evidencias/pytest-postgresql.xml]
+........................................................................ [ 86%]
+...........                                                              [100%]
+============================== warnings summary ===============================
+..\..\..\..\..\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\rafae\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+..\..\..\..\..\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\rafae\Desktop\CP DE PYTHON\finchat\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+83 passed, 2 warnings in 54.19s
+RESULTADO FINAL: todas as validacoes de banco aprovadas.
+$ docker rm --force --volumes [somente container temporario criado por esta validacao]
+finchat-cp1-validation-pg-bfe58d9965
+PASS: container PostgreSQL temporario removido; dados eram tmpfs, sem volume persistente criado.
+PASS: diretorio temporario exclusivo removido. Banco local e volume Docker original preservados.

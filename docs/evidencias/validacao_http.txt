@@ -1,0 +1,11 @@
+OK - /health respondeu HTTP 200
+OK - /api/v1/health respondeu HTTP 200
+OK - /docs respondeu HTTP 200
+OK - /redoc respondeu HTTP 200
+OK - /openapi.json respondeu HTTP 200
+OK - 39 operacoes REST documentadas; autenticacao Bearer no OpenAPI
+OK - Rota privada bloqueia acesso sem token
+OK - CPF: login, perfil, listagens, saldo consolidado e contas validados com Decimal
+OK - CNPJ: login, perfil, listagens, saldo consolidado e contas validados com Decimal
+OK - Acesso por HTTP a conta de outro usuario bloqueado com 404
+OK - Smoke HTTP somente leitura: nenhum registro financeiro alterado

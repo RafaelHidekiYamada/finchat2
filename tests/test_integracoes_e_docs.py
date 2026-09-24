@@ -3,8 +3,12 @@
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import sessionmaker
 
+from app import seed
 from app.main import app
+from app.models import Category, Transaction
 from tests.helpers import PREFIX, criar_conta, dinheiro, erro, sucesso
 
 
@@ -29,6 +33,57 @@ def test_sincronizacao_bancaria_simulada_e_idempotente(client, cpf):
     assert len(transactions) == first["imported_count"]
     listed = sucesso(client.get(f"{PREFIX}/bank-connections", headers=headers))
     assert listed[0]["last_synced_at"]
+
+
+def test_sincronizacao_reutiliza_categoria_renomeada_sem_duplicar(client, cpf):
+    headers = cpf["headers"]
+    categories = sucesso(client.get(f"{PREFIX}/categories", headers=headers))
+    transport = next(item for item in categories if item["name"] == "Transporte")
+    sucesso(client.put(f"{PREFIX}/categories/{transport['id']}", headers=headers,
+                       json={"name": "transporte"}))
+    expected_categories = sucesso(client.get(f"{PREFIX}/categories", headers=headers))
+    account = criar_conta(client, headers)
+    connection = sucesso(client.post(f"{PREFIX}/bank-connections", headers=headers,
+                                     json={"bank_account_id": account["id"]}), 201)
+    path = f"{PREFIX}/bank-connections/{connection['id']}/sync"
+
+    first = sucesso(client.post(path, headers=headers))
+    assert first["imported_count"] == 3
+    assert sucesso(client.get(f"{PREFIX}/categories", headers=headers)) == expected_categories
+    imported_transport = sucesso(client.get(f"{PREFIX}/transactions", headers=headers,
+                                            params={"category_id": transport["id"]}))
+    assert len(imported_transport) == 1
+    assert imported_transport[0]["category_id"] == transport["id"]
+    assert imported_transport[0]["type"] == "EXPENSE"
+    assert dinheiro(imported_transport[0]["amount"]) == Decimal("25.00")
+
+    second = sucesso(client.post(path, headers=headers))
+    assert second["imported_count"] == 0
+    assert second["transactions"] == []
+    assert sucesso(client.get(f"{PREFIX}/categories", headers=headers)) == expected_categories
+    transactions = sucesso(client.get(f"{PREFIX}/transactions", headers=headers))
+    assert len(transactions) == first["imported_count"]
+
+
+def test_seed_preserva_categorias_renomeadas_ao_repetir(db_session, monkeypatch):
+    monkeypatch.setattr(seed, "SessionLocal", sessionmaker(bind=db_session.get_bind(), expire_on_commit=False))
+    seed.populate()
+    categories = list(db_session.scalars(select(Category).order_by(Category.id)))
+    assert len(categories) == 14
+    for category in categories:
+        category.name = category.name.lower()
+    db_session.commit()
+    expected_categories = [(row.id, row.user_id, row.name, row.type) for row in categories]
+    expected_transactions = list(db_session.execute(select(Transaction.id, Transaction.category_id).order_by(Transaction.id)))
+    assert len(expected_transactions) == 5
+
+    seed.populate()
+    db_session.expire_all()
+    actual_categories = [(row.id, row.user_id, row.name, row.type)
+                         for row in db_session.scalars(select(Category).order_by(Category.id))]
+    actual_transactions = list(db_session.execute(select(Transaction.id, Transaction.category_id).order_by(Transaction.id)))
+    assert actual_categories == expected_categories
+    assert actual_transactions == expected_transactions
 
 
 def test_conexao_bancaria_respeita_titularidade(client, cpf, user_factory):

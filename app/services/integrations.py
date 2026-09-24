@@ -32,13 +32,13 @@ def sync_connection(db: Session, user: User, connection_id: int, provider: BankP
         raise AppError(400, "INACTIVE_CONNECTION", "Conexão simulada não está ativa.")
     provider = provider or SimulatedBankProvider()
     ensure_default_categories(db, user.id)
-    categories = {(category.name, category.type): category.id for category in db.scalars(select(Category).where(Category.user_id == user.id))}
+    categories = {(category.name.lower(), category.type): category.id for category in db.scalars(select(Category).where(Category.user_id == user.id))}
     imported = []
     for movement in provider.fetch_transactions(connection.external_id, connection.consent_at.date()):
         exists = db.scalar(select(Transaction.id).where(Transaction.user_id == user.id, Transaction.bank_account_id == connection.bank_account_id, Transaction.external_id == movement.external_id))
         if exists:
             continue
-        payload = TransactionCreate(description=movement.description, amount=movement.amount, date=movement.date, type=movement.type, category_id=categories[movement.category_name, movement.type], bank_account_id=connection.bank_account_id, origin=Origin.BANK, reconciliation_status=ReconciliationStatus.RECONCILED)
+        payload = TransactionCreate(description=movement.description, amount=movement.amount, date=movement.date, type=movement.type, category_id=categories[movement.category_name.lower(), movement.type], bank_account_id=connection.bank_account_id, origin=Origin.BANK, reconciliation_status=ReconciliationStatus.RECONCILED)
         transaction = create_resource(db, user, Transaction, payload)
         transaction.external_id = movement.external_id
         db.flush()

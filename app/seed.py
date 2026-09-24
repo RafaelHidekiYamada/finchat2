@@ -28,7 +28,7 @@ def populate():
             elif user.document != values["document"] or user.document_type != values["document_type"]:
                 raise RuntimeError("E-mail de demonstração já utilizado por outro perfil; seed cancelado sem alterações.")
             ensure_default_categories(db, user.id)
-            categories = {row.name: row.id for row in db.scalars(select(Category).where(Category.user_id == user.id))}
+            categories = {(row.name.lower(), row.type): row.id for row in db.scalars(select(Category).where(Category.user_id == user.id))}
             nickname = f"Conta demo {values['document_type']}"
             account = db.scalar(select(BankAccount).where(BankAccount.user_id == user.id, BankAccount.nickname == nickname))
             if account is None:
@@ -37,9 +37,9 @@ def populate():
                 create_connection(db, user, account.id)
             if values["document_type"] == "CPF":
                 movements = [
-                    dict(description="Salário fictício de demonstração", amount="3000.00", type="INCOME", category_id=categories["Salário"], bank_account_id=account.id),
-                    dict(description="Alimentação fictícia de demonstração", amount="50.00", type="EXPENSE", category_id=categories["Alimentação"], bank_account_id=account.id),
-                    dict(description="Transporte em dinheiro de demonstração", amount="25.00", type="EXPENSE", category_id=categories["Transporte"], origin="CASH"),
+                    dict(description="Salário fictício de demonstração", amount="3000.00", type="INCOME", category_id=categories["salário", "INCOME"], bank_account_id=account.id),
+                    dict(description="Alimentação fictícia de demonstração", amount="50.00", type="EXPENSE", category_id=categories["alimentação", "EXPENSE"], bank_account_id=account.id),
+                    dict(description="Transporte em dinheiro de demonstração", amount="25.00", type="EXPENSE", category_id=categories["transporte", "EXPENSE"], origin="CASH"),
                 ]
             else:
                 movements = []
@@ -54,7 +54,7 @@ def populate():
                     contract = db.scalar(select(Contract).where(Contract.user_id == user.id, Contract.title == title, Contract.partner_id == partner.id))
                     if contract is None:
                         contract = create_resource(db, user, Contract, ContractCreate(title=title, partner_id=partner.id, type=transaction_type, expected_amount=expected, start_date=today.replace(day=1)))
-                    movements.append(dict(description=f"Movimentação demo: {partner_name}", amount=paid, type=transaction_type, category_id=categories[category_name], bank_account_id=account.id, partner_id=partner.id, contract_id=contract.id))
+                    movements.append(dict(description=f"Movimentação demo: {partner_name}", amount=paid, type=transaction_type, category_id=categories[category_name.lower(), transaction_type], bank_account_id=account.id, partner_id=partner.id, contract_id=contract.id))
             for movement in movements:
                 if not db.scalar(select(Transaction.id).where(Transaction.user_id == user.id, Transaction.description == movement["description"])):
                     create_resource(db, user, Transaction, TransactionCreate(date=today, **movement))
