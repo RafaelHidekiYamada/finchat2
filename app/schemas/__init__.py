@@ -66,6 +66,18 @@ class Success(Schema, Generic[T]):
     data: T
 
 
+class PaginationMeta(Schema):
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+
+
+class Paginated(Schema, Generic[T]):
+    data: list[T]
+    meta: PaginationMeta
+
+
 class ErrorBody(Schema):
     code: str
     message: str
@@ -287,7 +299,107 @@ class ChatRead(Schema):
 class HealthRead(Schema):
     status: Literal["ok"]
     database: Literal["ok"]
-    environment: Literal["CP1_SIMULATION"]
+    environment: Literal["CP2"]
+
+
+class MonthlyFlow(Schema):
+    month: str
+    income: Decimal
+    expenses: Decimal
+
+
+class ExpenseByCategory(Schema):
+    category_id: int
+    category_name: str
+    total: Decimal
+
+
+class AccountBalance(Schema):
+    id: int
+    institution: str
+    nickname: str
+    balance: Decimal
+
+
+class PartnerMovement(Schema):
+    partner_id: int
+    partner_name: str
+    partner_type: PartnerType
+    total_income: Decimal
+    total_expenses: Decimal
+    movement: Decimal
+
+
+class ContractDue(Schema):
+    contract_id: int
+    title: str
+    end_date: dt.date
+    expected_amount: Decimal
+
+
+class CompanyOverview(Schema):
+    active_contracts: int
+    received: Decimal
+    paid: Decimal
+    clients: list[PartnerMovement]
+    suppliers: list[PartnerMovement]
+    contracts_due_soon: list[ContractDue]
+    top_partners: list[PartnerMovement]
+
+
+class DashboardOverview(Schema):
+    start_date: dt.date
+    end_date: dt.date
+    consolidated_balance: Decimal
+    total_income: Decimal
+    total_expenses: Decimal
+    net_result: Decimal
+    monthly_flow: list[MonthlyFlow]
+    expenses_by_category: list[ExpenseByCategory]
+    latest_transactions: list[TransactionRead]
+    alerts: list[str]
+    bank_accounts: list[AccountBalance]
+    company: CompanyOverview | None = None
+
+
+class FinancialAnalysisRequest(Schema):
+    start_date: dt.date | None = None
+    end_date: dt.date | None = None
+
+    @model_validator(mode="after")
+    def dates_are_ordered(self):
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValueError("Data inicial deve ser igual ou anterior à final.")
+        return self
+
+
+class AnalysisPeriod(Schema):
+    start_date: dt.date
+    end_date: dt.date
+
+
+class FinancialAnalysisContent(Schema):
+    financial_summary: str
+    positive_points: list[str]
+    attention_points: list[str]
+    recommendations: list[str]
+    alerts: list[str]
+    data_quality_notes: list[str]
+    disclaimer: Literal["A análise é educacional e não representa recomendação de investimento."] = "A análise é educacional e não representa recomendação de investimento."
+
+    @model_validator(mode="after")
+    def reject_investment_recommendations(self):
+        prohibited = ("compre ", "comprar ", "venda ", "vender ", "invista ", "investir ", "ações", "cripto")
+        if any(term in recommendation.lower() for recommendation in self.recommendations for term in prohibited):
+            raise ValueError("Recomendações de compra, venda ou investimento não são permitidas.")
+        return self
+
+
+class FinancialAnalysisRead(FinancialAnalysisContent):
+    period: AnalysisPeriod
+    generated_at: dt.datetime
+    analysis_source: Literal["ollama", "deterministic"]
+    fallback_used: bool
 
 
 def update_schema(name, schema):

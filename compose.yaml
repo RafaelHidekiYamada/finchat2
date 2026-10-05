@@ -4,10 +4,16 @@ services:
   api:
     build:
       context: .
-    image: finchat-api:cp1
+    image: finchat-api:cp2
     environment:
-      SECRET_KEY: ${SECRET_KEY:?Configure SECRET_KEY no arquivo .env}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${SECRET_KEY:-}}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      LLM_ENABLED: ${LLM_ENABLED:-true}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:4b}
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-60}
       # SQLite SQL persistido no volume, independente do arquivo local.
       DATABASE_URL: sqlite:////app/data/finchat.db
       TZ: America/Sao_Paulo
@@ -15,8 +21,35 @@ services:
       - "127.0.0.1:${FINCHAT_PORT:-8080}:8000"
     volumes:
       - finchat_data:/app/data
+    depends_on:
+      ollama-model:
+        condition: service_completed_successfully
     restart: unless-stopped
     stop_grace_period: 15s
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  ollama-model:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    command: ["pull", "${OLLAMA_MODEL:-gemma3:4b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   finchat_data:
+  ollama_data:

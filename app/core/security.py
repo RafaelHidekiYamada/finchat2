@@ -31,9 +31,10 @@ def verify_password(password: str, password_hash: str) -> bool:
 def create_access_token(user_id: int) -> str:
     settings = get_settings()
     now = datetime.now(timezone.utc)
-    return jwt.encode({"sub": str(user_id), "iat": now, "exp": now + timedelta(minutes=settings.access_token_expire_minutes), "iss": "finchat", "aud": "finchat-api"}, settings.secret_key, algorithm="HS256")
+    return jwt.encode({"sub": str(user_id), "iat": now, "exp": now + timedelta(minutes=settings.access_token_expire_minutes), "iss": "finchat", "aud": "finchat-api"}, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 def decode_access_token(token: str) -> int:
-    payload = jwt.decode(token, get_settings().secret_key, algorithms=["HS256"], issuer="finchat", audience="finchat-api", options={"require": ["sub", "exp", "iat", "iss", "aud"]})
+    settings = get_settings()
+    payload = jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm], issuer="finchat", audience="finchat-api", options={"require": ["sub", "exp", "iat", "iss", "aud"]})
     return int(payload["sub"])

@@ -1,18 +1,21 @@
-from datetime import date
-from typing import Annotated
+from datetime import date, datetime, timezone
+from math import ceil
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query
 
-from app.api.dependencies import CurrentUser, Db
+from app.api.dependencies import CurrentUser, Db, get_financial_analysis_provider
 from app.api.routes.crud import register_crud
 from app.core.config import get_settings
 from app.core.security import create_access_token
 from app.models import BankAccount, BankConnection, Category, Contract, Origin, Partner, Transaction, TransactionType
-from app.repositories.finance import list_owned, owned, transaction_query
-from app.schemas import BankAccountCreate, BankAccountRead, BankAccountUpdate, BalanceRead, BankConnectionCreate, BankConnectionRead, CategoryCreate, CategoryRead, CategoryUpdate, ChatCommand, ChatRead, ContractCreate, ContractRead, ContractUpdate, ErrorResponse, FinancialSummaryRead, Login, PartnerCreate, PartnerRead, PartnerUpdate, Success, SummaryRead, SyncRead, TokenRead, TransactionCreate, TransactionRead, TransactionUpdate, UserCreate, UserRead
+from app.repositories.finance import count_transactions, list_owned, owned, transaction_query
+from app.schemas import BankAccountCreate, BankAccountRead, BankAccountUpdate, BalanceRead, BankConnectionCreate, BankConnectionRead, CategoryCreate, CategoryRead, CategoryUpdate, ChatCommand, ChatRead, ContractCreate, ContractRead, ContractUpdate, DashboardOverview, ErrorResponse, FinancialAnalysisRead, FinancialAnalysisRequest, FinancialSummaryRead, Login, Paginated, PartnerCreate, PartnerRead, PartnerUpdate, Success, SummaryRead, SyncRead, TokenRead, TransactionCreate, TransactionRead, TransactionUpdate, UserCreate, UserRead
 from app.services.auth import authenticate, register
+from app.services.dashboard import dashboard_overview, llm_financial_context
 from app.services.finance import create_resource, financial_summary, invalid, summary, validate_filters
 from app.services.integrations import create_connection, execute_command, sync_connection
+from app.integrations.llm_provider import FinancialAnalysisProvider, FinancialAnalysisResult, insufficient_data_analysis
 
 ERROR_RESPONSES = {code: {"model": ErrorResponse, "description": description} for code, description in {400: "Regra de negócio inválida", 401: "Token ou credenciais inválidos", 403: "Perfil sem permissão", 404: "Recurso não encontrado ou pertencente a outro usuário", 409: "Registro duplicado ou recurso em uso", 422: "Campos inválidos", 500: "Erro interno sem detalhes sensíveis"}.items()}
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
@@ -43,11 +46,55 @@ def get_filters(start_date: date | None = None, end_date: date | None = None, ty
 Filters = Annotated[dict, Depends(get_filters)]
 
 
-@router.get("/transactions", tags=["Transações"], response_model=Success[list[TransactionRead]], summary="Listar e filtrar transações")
-def list_transactions(db: Db, user: CurrentUser, filters: Filters, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+@router.get("/transactions", tags=["Transações"], response_model=Success[list[TransactionRead]] | Paginated[TransactionRead], summary="Listar, filtrar, ordenar e paginar transações", description="Use page/page_size para o contrato paginado do CP2. Sem esses parâmetros, mantém o envelope legado do CP1 com limit/offset, sempre limitado a 100 registros.")
+def list_transactions(
+    db: Db,
+    user: CurrentUser,
+    filters: Filters,
+    page: int | None = Query(None, ge=1),
+    page_size: int | None = Query(None, ge=1, le=100),
+    sort_by: Literal["occurred_at", "date", "amount", "created_at", "description"] = "occurred_at",
+    order: Literal["asc", "desc"] = "desc",
+    limit: int = Query(100, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
     validate_filters(db, user, filters)
-    records = list(db.scalars(transaction_query(user.id, filters).offset(offset).limit(limit)))
+    query = transaction_query(user.id, filters, sort_by, order)
+    if page is not None or page_size is not None:
+        current_page, current_size = page or 1, page_size or 20
+        total = count_transactions(db, user.id, filters)
+        records = list(db.scalars(query.offset((current_page - 1) * current_size).limit(current_size)))
+        return {"data": records, "meta": {"page": current_page, "page_size": current_size, "total": total, "total_pages": ceil(total / current_size) if total else 0}}
+    records = list(db.scalars(query.offset(offset).limit(limit)))
     return {"message": "Transações consultadas.", "data": records}
+
+
+@router.get("/dashboard/overview", tags=["Dashboard"], response_model=Success[DashboardOverview], summary="Consultar visão financeira consolidada")
+def dashboard(db: Db, user: CurrentUser, start_date: date | None = None, end_date: date | None = None):
+    return {"message": "Dashboard consolidado calculado.", "data": dashboard_overview(db, user, start_date, end_date)}
+
+
+@router.post("/ai/financial-analysis", tags=["Análise inteligente"], response_model=Success[FinancialAnalysisRead], summary="Gerar análise financeira educacional com IA", description="O backend envia ao provedor somente agregados financeiros minimizados. Identidade, token, documento, contato e dados bancários não são enviados.")
+def financial_analysis(
+    payload: FinancialAnalysisRequest,
+    db: Db,
+    user: CurrentUser,
+    provider: Annotated[FinancialAnalysisProvider, Depends(get_financial_analysis_provider)],
+):
+    overview = dashboard_overview(db, user, payload.start_date, payload.end_date)
+    context = llm_financial_context(overview, user)
+    has_movements = overview["total_income"] != 0 or overview["total_expenses"] != 0
+    outcome = provider.analyze(context) if has_movements else FinancialAnalysisResult(
+        content=insufficient_data_analysis(), source="deterministic", fallback_used=False
+    )
+    result = {
+        **outcome.content.model_dump(),
+        "period": {"start_date": overview["start_date"], "end_date": overview["end_date"]},
+        "generated_at": datetime.now(timezone.utc),
+        "analysis_source": outcome.source,
+        "fallback_used": outcome.fallback_used,
+    }
+    return {"message": "Análise financeira gerada.", "data": result}
 
 
 @router.get("/transactions/summary", tags=["Transações"], response_model=Success[SummaryRead], summary="Consultar resumo financeiro", description="Saldo inicial das contas + receitas − despesas filtradas, incluindo dinheiro. O filtro de período restringe as movimentações; não representa saldo histórico de fechamento. Conciliação não altera o saldo.")
@@ -91,7 +138,7 @@ def bank_connection(payload: BankConnectionCreate, db: Db, user: CurrentUser):
 
 
 @router.get("/bank-connections", tags=["Conexões simuladas"], response_model=Success[list[BankConnectionRead]], summary="Listar conexões fictícias")
-def connections(db: Db, user: CurrentUser, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+def connections(db: Db, user: CurrentUser, limit: int = Query(100, ge=1, le=100), offset: int = Query(0, ge=0)):
     return {"message": "Conexões simuladas consultadas.", "data": list_owned(db, BankConnection, user.id, limit, offset)}
 
 

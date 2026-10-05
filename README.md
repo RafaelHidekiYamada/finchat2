@@ -1,10 +1,10 @@
-# 1. FinChat — Assistente Financeiro Inteligente via WhatsApp
+# 1. FinChat — Dashboard e Assistente Financeiro Inteligente
 
-Projeto acadêmico: **Checkpoint 1 (CP1)**. Backend REST em Python para organizar finanças pessoais e empresariais. Esta entrega funciona localmente, sem frontend e sem comunicação com bancos ou WhatsApp.
+Projeto acadêmico: **Checkpoint 2 (CP2)**. Aplicação full stack para organizar finanças pessoais e empresariais, com backend FastAPI, frontend React, dashboard consolidado e análise educacional via Ollama local com fallback determinístico. Banco e WhatsApp continuam simulados e nenhuma credencial bancária é armazenada.
 
 ## 2. Descrição
 
-O FinChat reúne contas, categorias, receitas, despesas e consultas financeiras em uma API. Pessoas físicas usam o perfil CPF; empresas usam o perfil CNPJ, que também permite gerenciar clientes, fornecedores e contratos. O chat do CP1 interpreta comandos simples por regras locais e devolve JSON; não utiliza inteligência artificial generativa.
+O FinChat reúne contas, categorias, receitas, despesas e consultas financeiras. Pessoas físicas usam o perfil CPF; empresas usam o perfil CNPJ, que também permite gerenciar clientes, fornecedores e contratos. O frontend consome exclusivamente a API autenticada. O chat legado continua local; a nova área **Análise inteligente** usa somente agregados financeiros minimizados.
 
 ## 3. Problema escolhido
 
@@ -18,11 +18,11 @@ Pessoas e pequenos negócios nem sempre registram movimentações, distinguem di
 
 ## 5. Solução proposta
 
-Uma API autenticada concentra os registros financeiros e aplica as mesmas regras de negócio ao CRUD, ao chat simulado e à importação bancária simulada. As interfaces de integração permitem substituir os simuladores por provedores oficiais em uma etapa futura.
+Uma API autenticada concentra os registros e regras de negócio. O dashboard fornece dados reais em uma chamada, o frontend oferece os fluxos de gestão e o adaptador de IA gera orientação educacional sem poder escrever no banco.
 
-**As conexões bancárias, consentimentos e importações deste CP1 são simulações. O chat não recebe nem envia mensagens reais. Não são necessárias credenciais de WhatsApp ou de bancos.**
+**As conexões bancárias, consentimentos e importações são simulações. O chat não recebe nem envia mensagens reais. Não são necessárias credenciais de WhatsApp ou de bancos.**
 
-## 6. Funcionalidades do CP1
+## 6. Funcionalidades do CP1 preservadas e evolução CP2
 
 - Cadastro CPF/CNPJ, login JWT Bearer e consulta do próprio perfil.
 - CRUD de contas, categorias e transações, com isolamento por usuário.
@@ -33,16 +33,22 @@ Uma API autenticada concentra os registros financeiros e aplica as mesmas regras
 - Chat local para `saldo`, `resumo do mês`, `gastei 50 em alimentação` e `recebi 200 por serviço`.
 - Banco relacional, migration Alembic, seed idempotente e testes Pytest.
 - Documentação Swagger/OpenAPI e ReDoc, com erros padronizados.
+- Paginação, filtros e ordenação de transações com limite máximo de 100.
+- Dashboard consolidado com saldo, fluxo mensal, categorias, alertas e contas.
+- Visão empresarial com contratos ativos, vencimentos e parceiros de maior movimentação.
+- Frontend React/TypeScript responsivo com login, cadastro, CRUDs e rotas por perfil.
+- Análise financeira estruturada via Ollama local, com minimização de dados e fallback por regras determinísticas.
+- Migration CP2 com índices compostos e integridade adicional de parceiros.
 
-## 7. Escopo futuro: CP2 e CP3
+## 7. Evolução e escopo futuro
 
 | Etapa | Escopo |
 | --- | --- |
-| CP1 — esta entrega | Backend, banco de dados, API REST, regras de negócio, autenticação, simulações, testes e Swagger. |
-| CP2 | Frontend web ou dashboard administrativo responsivo que consome esta API; visualização de categorias, contas, contratos e resumos. |
+| CP1 — preservado | Backend, banco, API REST, regras, autenticação, simulações, testes e Swagger. |
+| CP2 — esta entrega | Frontend, dashboard real, API otimizada, banco revisado, testes e análise via LLM. |
 | CP3 | WhatsApp Cloud API oficial, Open Finance/sandbox com consentimento, notificações, relatórios avançados, melhorias de segurança e deploy. |
 
-Credenciais, verificações de webhook, autorização do titular e requisitos dos provedores devem ser tratados durante a implementação real do CP3. Nenhum desses serviços externos está conectado no CP1.
+Credenciais bancárias, verificações de webhook, autorização do titular, rate limiting e requisitos de produção ficam para o CP3. A análise do CP2 não exige chave ou serviço de IA pago.
 
 ## 8. Regras de negócio
 
@@ -77,12 +83,19 @@ Detalhamento: [regras de negócio](docs/regras_de_negocio.md).
 | PostgreSQL e psycopg | Alternativa configurável por `DATABASE_URL` |
 | Alembic | Versionamento do schema do banco |
 | JWT Bearer | Autenticação das rotas privadas |
-| Pytest | Testes automatizados |
+| Pytest | Testes automatizados do backend |
+| React, TypeScript e Vite | Frontend e build de produção |
+| Tailwind CSS | Design system responsivo |
+| React Router e Axios | Rotas, autenticação e cliente HTTP centralizado |
+| Recharts | Gráficos do dashboard |
+| Ollama | Execução local do modelo de linguagem, sem chave paga |
+| Regras determinísticas | Fallback financeiro reproduzível e sempre disponível |
+| Vitest e Testing Library | Testes básicos do frontend |
 | Docker e Docker Compose | Execução opcional da API com SQLite em volume persistente |
 
 As dependências estão em [requirements.txt](requirements.txt). [requirements-lock.txt](requirements-lock.txt) registra as versões exatas verificadas em Python 3.11 no Windows e no container Linux. A execução local e a suíte usam SQLite; o suporte a PostgreSQL é configurável, mas não equivale a uma validação contra uma instância PostgreSQL real.
 
-## 10. Arquitetura inicial
+## 10. Arquitetura atual
 
 ```text
 finchat/
@@ -99,6 +112,7 @@ finchat/
 │   └── seed.py           # Dados fictícios idempotentes
 ├── alembic/              # Migrations
 ├── docs/                 # Documentação e apresentação
+├── frontend/             # React, TypeScript, Vite, Tailwind e testes
 ├── tests/                # Testes automatizados
 ├── scripts/docker_start.py # Migrations e inicialização no container
 ├── Dockerfile
@@ -110,7 +124,7 @@ finchat/
 └── README.md
 ```
 
-Fluxo: requisição → rota/schema → autenticação → serviço → repositório/modelos → banco. Serviços de chat e sincronização aplicam as regras financeiras antes de persistir transações. Consulte [arquitetura do CP1](docs/arquitetura_cp1.md).
+Fluxo: React → Axios/JWT → rota/schema → serviço → repositório/modelos → banco. O Ollama recebe somente o payload agregado pelo serviço e, se estiver indisponível, o mesmo payload é processado por regras locais. Consulte [arquitetura do CP2](docs/arquitetura_cp2.md), [otimizações](docs/otimizacoes_api_cp2.md), [revisão do banco](docs/revisao_banco_cp2.md) e [LLM](docs/llm_cp2.md).
 
 ## 11. Diagrama das entidades
 
@@ -138,16 +152,16 @@ erDiagram
 Para obter o projeto pelo GitHub:
 
 ```powershell
-git clone https://github.com/RafaelHidekiYamada/CP_Python_FinChat.git
-cd CP_Python_FinChat
+git clone https://github.com/RafaelHidekiYamada/finchat2.git
+cd finchat2
 ```
 
 O README, `app/`, `compose.yaml` e os demais arquivos ficam na raiz do repositório. Após clonar, execute os comandos nessa pasta; os caminhos absolutos `finchat` mostrados abaixo são exemplos do ambiente original. Para usar Docker, siga a opção da seção 16; para execução Python local, siga os passos a seguir.
 
-Pré-requisito: Python 3.11 ou superior instalado com o launcher `py`. Abra o PowerShell na pasta `finchat`:
+Pré-requisitos: Python 3.11+ e Node.js 20+ com npm. Abra o PowerShell na pasta do projeto:
 
 ```powershell
-cd "C:\Users\rafae\Desktop\CP DE PYTHON\finchat"
+cd "C:\caminho\para\finchat2"
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
 Copy-Item .env.example .env
@@ -163,15 +177,29 @@ O arquivo [.env.example](.env.example) lista a configuração local. Gere uma ch
 .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Copie o valor gerado para `SECRET_KEY` no `.env`. Exemplo de estrutura, com a chave ainda a preencher:
+Copie o valor gerado para `JWT_SECRET_KEY` no `.env`. Exemplo:
 
 ```dotenv
 DATABASE_URL=sqlite:///./finchat.db
-SECRET_KEY=SUBSTITUA_POR_UMA_CHAVE_ALEATORIA_DE_PELO_MENOS_32_CARACTERES
+JWT_SECRET_KEY=SUBSTITUA_POR_UMA_CHAVE_ALEATORIA_DE_PELO_MENOS_32_CARACTERES
+JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+CORS_ORIGINS=http://localhost:5173
+LLM_ENABLED=true
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=gemma3:4b
+OLLAMA_TIMEOUT_SECONDS=30
 ```
 
-**A chave acima é um marcador, não uma configuração utilizável.** `SECRET_KEY` é obrigatória, exige pelo menos 32 caracteres e não aceita marcadores conhecidos de exemplo. Configure-a antes de iniciar a API, executar migrations ou popular o banco. Não publique `.env`, tokens ou chaves. As credenciais de demonstração abaixo são fictícias e destinam-se apenas ao ambiente acadêmico local.
+**A chave JWT acima é um marcador, não uma configuração utilizável.** `JWT_SECRET_KEY` é obrigatória, exige pelo menos 32 caracteres e não aceita marcadores conhecidos. `SECRET_KEY` continua aceito somente para compatibilidade com o CP1. `LLM_ENABLED=false` desativa apenas a tentativa de usar o Ollama; as regras determinísticas continuam funcionando.
+
+Para executar sem Docker, instale o [Ollama](https://ollama.com/download), abra o aplicativo e baixe o modelo uma vez:
+
+```powershell
+ollama pull gemma3:4b
+```
+
+Se o Ollama não estiver instalado ou iniciado, a rota de análise continua respondendo por meio do fallback determinístico.
 
 Para uma instância PostgreSQL preparada por você, substitua a URL por:
 
@@ -179,7 +207,7 @@ Para uma instância PostgreSQL preparada por você, substitua a URL por:
 DATABASE_URL=postgresql+psycopg://usuario:senha@localhost:5432/finchat
 ```
 
-Os valores dessa URL são ilustrativos. O CP1 não cria servidor PostgreSQL nem migra automaticamente os dados de um banco SQLite existente. Execute as migrations no banco escolhido. A validação local desta entrega é feita com SQLite.
+Os valores dessa URL são ilustrativos. O projeto não cria servidor PostgreSQL nem migra automaticamente dados de SQLite. Execute as migrations no banco escolhido.
 
 ## 14. Executar migrations
 
@@ -224,29 +252,47 @@ A API ficará em `http://127.0.0.1:8000`. Em outro PowerShell:
 Invoke-RestMethod http://127.0.0.1:8000/health
 ```
 
-Use `Ctrl+C` no terminal do servidor para encerrar. `--reload` é destinado ao desenvolvimento local.
+Use `Ctrl+C` para encerrar. `--reload` é destinado ao desenvolvimento local.
+
+### Iniciar o frontend
+
+Em outro PowerShell:
+
+```powershell
+cd frontend
+Copy-Item .env.example .env
+npm.cmd install
+npm.cmd run dev
+```
+
+Abra `http://localhost:5173`. `VITE_API_BASE_URL` deve apontar para `http://localhost:8000/api/v1`. Para gerar a versão de produção:
+
+```powershell
+npm.cmd test
+npm.cmd run build
+```
 
 Se a porta estiver ocupada, acrescente `--port 8010` ao comando e acesse `http://127.0.0.1:8010/docs`. Na verificação desta entrega, as portas 8000 e 8001 já estavam ocupadas, portanto foi usada a porta **8010**.
 
 ### Executar com Docker no Windows
 
-Esta é uma alternativa à instalação Python local: requer **Docker Desktop iniciado, usando containers Linux**, com Docker Compose. API, rotas e Swagger ficam no mesmo container; o banco continua sendo **SQLite SQL**. Não é necessário criar containers, imagens ou volumes manualmente no aplicativo.
+Esta é uma alternativa à instalação Python local: requer **Docker Desktop iniciado, usando containers Linux**, com Docker Compose. O Compose inicia a API, o Ollama e baixa o modelo configurado automaticamente; o banco continua sendo **SQLite SQL**. Não é necessário criar containers, imagens, modelos ou volumes manualmente no aplicativo.
 
-Na pasta `finchat`, mantenha o `.env` com a `SECRET_KEY` já configurada. O `.env` existente pode ser reutilizado. Em uma instalação nova, copie `.env.example` somente se `.env` não existir e configure a chave conforme a seção 13. Se não houver Python instalado, gere a chave pelo Docker:
+Na pasta do projeto, mantenha o `.env` com `JWT_SECRET_KEY` configurado. O Compose desta entrega executa a API; rode o frontend separadamente com Vite.
 
 ```powershell
 docker run --rm python:3.11-slim-bookworm python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Copie a saída para `SECRET_KEY` no `.env`. Depois execute:
+Copie a saída para `JWT_SECRET_KEY` no `.env`. Depois execute:
 
 ```powershell
-cd "C:\Users\rafae\Desktop\CP DE PYTHON\finchat"
+cd "C:\caminho\para\finchat2"
 docker compose up -d --build --wait
 docker compose exec api python -m app.seed
 ```
 
-O primeiro comando constrói a imagem, aplica `alembic upgrade head` automaticamente, inicia Uvicorn e aguarda o healthcheck. O segundo popula os dados fictícios de demonstração e pode ser repetido sem duplicação.
+Na primeira execução, o comando também baixa o modelo `gemma3:4b`, o que pode levar alguns minutos. Depois ele constrói a API, aplica `alembic upgrade head`, inicia Uvicorn e aguarda o healthcheck. O segundo comando popula os dados fictícios de demonstração e pode ser repetido sem duplicação.
 
 - [Swagger no Docker](http://127.0.0.1:8080/docs)
 - [ReDoc no Docker](http://127.0.0.1:8080/redoc)
@@ -254,13 +300,14 @@ O primeiro comando constrói a imagem, aplica `alembic upgrade head` automaticam
 
 Os usuários e senhas são os mesmos da seção 15. A porta padrão é **8080**, publicada somente em `127.0.0.1`. Para alterar, defina `FINCHAT_PORT=8081` no `.env`, execute `docker compose up -d` novamente e ajuste a URL. A porta interna continua 8000. O container usa o fuso `America/Sao_Paulo`, preservando as datas locais dos comandos e do seed.
 
-**Persistência:** o Compose usa `sqlite:////app/data/finchat.db` no volume nomeado `finchat_finchat_data`. Esse banco começa separado do `finchat.db` da execução Python local; o arquivo local permanece preservado e não é copiado para a imagem. Reiniciar ou recriar o container mantém os registros do volume. A variável `DATABASE_URL` do `.env` continua disponível para execução local; neste Compose, o caminho SQLite é definido explicitamente para garantir a persistência.
+**Persistência:** o Compose usa `sqlite:////app/data/finchat.db` no volume `finchat_finchat_data` e armazena os modelos no volume `finchat_ollama_data`. O banco começa separado do `finchat.db` da execução Python local; reiniciar ou recriar os containers mantém registros e modelo. A variável `DATABASE_URL` do `.env` continua disponível para execução local; no Compose, o caminho SQLite é definido explicitamente.
 
 Comandos de operação:
 
 ```powershell
 docker compose ps
 docker compose logs --tail 100 api
+docker compose logs --tail 100 ollama
 docker compose exec api python -m pytest -q -p no:cacheprovider
 docker compose stop
 docker compose start --wait
@@ -300,12 +347,14 @@ As rotas da tabela usam o prefixo **`/api/v1`**. Autenticação é exigida, exce
 | Conexões simuladas | `POST /bank-connections`, `GET /bank-connections`, `POST /bank-connections/{id}/sync` |
 | Categorias | `POST /categories`, `GET /categories`, `GET /categories/{id}`, `PUT /categories/{id}`, `DELETE /categories/{id}` |
 | Transações | `POST /transactions`, `GET /transactions`, `GET /transactions/{id}`, `PUT /transactions/{id}`, `DELETE /transactions/{id}`, `POST /transactions/cash`, `GET /transactions/summary` |
+| Dashboard | `GET /dashboard/overview` |
+| Análise inteligente | `POST /ai/financial-analysis` |
 | Parceiros — CNPJ | `POST /partners`, `GET /partners`, `GET /partners/{id}`, `PUT /partners/{id}`, `DELETE /partners/{id}`, `GET /partners/{id}/financial-summary` |
 | Contratos — CNPJ | `POST /contracts`, `GET /contracts`, `GET /contracts/{id}`, `PUT /contracts/{id}`, `DELETE /contracts/{id}`, `GET /contracts/{id}/financial-summary` |
 | Chat simulado | `POST /chat/commands` |
 | Saúde pública | `GET /health` (também disponível em `/health`, sem prefixo) |
 
-As listagens retornam a lista em `data` e aceitam paginação `limit` (padrão 100, de 1 a 500) e `offset` (padrão 0). Use os IDs devolvidos pelas consultas ou criações; os números abaixo são exemplos e devem ser substituídos.
+As listagens legadas retornam a lista em `data` e aceitam `limit/offset`, com máximo 100. Transações também aceitam `page`, `page_size` (máximo 100), período, tipo, categoria, conta, `sort_by` e `order`; nesse modo retornam `data` e `meta`. Use sempre IDs do próprio usuário.
 
 Cadastro de um usuário, se não estiver usando o seed:
 
@@ -443,18 +492,22 @@ Erros seguem:
 | `409` | Conflito de unicidade ou recurso ainda em uso |
 | `422` | Payload ou parâmetro inválido |
 | `500` | Erro interno; detalhes técnicos não são expostos ao cliente |
+| `503` | LLM não configurada ou provedor temporariamente indisponível |
 
 ## 19. Executar os testes
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
+cd frontend
+npm.cmd test
+npm.cmd run build
 ```
 
-A suíte usa um banco de teste isolado dos dados locais. Verifica autenticação, CRUDs financeiros, precisão monetária e saldo, filtros, isolamento entre usuários, permissões CPF/CNPJ, parceiros/contratos, banco simulado e chat. Não depende de credenciais externas. A execução de verificação aprovou **81 testes**, com dois avisos de depreciação das dependências de TestClient/AnyIO. Alterações futuras precisam passar novamente pela suíte.
+A suíte do backend usa banco isolado e não chama serviços externos: o provider de IA é substituído nos testes. Ela cobre CP1, dashboard, paginação, índices, vencimentos, sanitização da IA e falhas controladas. A validação CP2 aprovou **91 testes de backend**. O frontend aprovou **2 testes** de proteção de rota e renderização do dashboard; o build TypeScript/Vite valida a aplicação completa.
 
-Também foram verificados migrations de criação/reversão em SQLite temporário, ausência de diferenças entre migration e modelos, precisão de centavos e repetição do seed sem duplicatas. A configuração e o SQL de PostgreSQL foram conferidos sem conexão com um servidor real. API iniciada e `/health`, `/api/v1/health`, `/docs`, `/redoc` e `/openapi.json` responderam HTTP 200; ambos os usuários de demonstração conseguiram fazer login e consultar seu resumo.
+Também são verificados migrations em SQLite temporário, seed idempotente, `/health`, Swagger, login, dashboard, CRUD financeiro, área CNPJ e erro de LLM sem chave. Consulte as evidências em `docs/evidencias/`.
 
-Na validação Docker, a imagem foi construída, as migrations e o seed executados, e **os 81 testes também passaram dentro do container Linux**. Healthcheck, Swagger, ReDoc, login e resumos foram conferidos pela porta 8080. Foram verificadas a execução sem root, a permissão de escrita no volume e a configuração do fuso UTC−03. O container foi recriado e as contagens, transações e identificadores de conexão permaneceram iguais, comprovando a persistência do banco no volume.
+O Docker continua executando a API sem root, com migrations automáticas e SQLite em volume. O frontend é executado separadamente nesta entrega.
 
 ## 20. Integrantes do grupo
 
@@ -470,3 +523,5 @@ Na validação Docker, a imagem foi construída, as migrations e o seed executad
 ## 21. Organização no Trello ou Notion
 
 **Link do quadro:** `https://trello.com/b/v6yK2Ik4/ruizstartup`.
+
+Sugestão de colunas e cartões do CP2: [docs/trello_notion_cp2.md](docs/trello_notion_cp2.md). Roteiro de demonstração: [docs/roteiro_apresentacao_cp2.md](docs/roteiro_apresentacao_cp2.md).

@@ -15,7 +15,7 @@ def register_crud(router: APIRouter, path: str, model, create_schema, update_sch
         db.commit()
         return {"message": f"{label} criado(a) com sucesso.", "data": record}
 
-    def listing(db: Db, user: CurrentUser, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+    def listing(db: Db, user: CurrentUser, limit: int = Query(100, ge=1, le=100), offset: int = Query(0, ge=0)):
         if company:
             require_company(user)
         return {"message": "Consulta realizada com sucesso.", "data": list_owned(db, model, user.id, limit, offset)}

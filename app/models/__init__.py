@@ -13,6 +13,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Numeric,
     String,
     Text,
@@ -181,6 +182,11 @@ class Category(EntityMixin, Base):
 
 class Partner(EntityMixin, Base):
     __tablename__ = "partners"
+    __table_args__ = (
+        Index("uq_partners_user_document", "user_id", "document", unique=True),
+        Index("uq_partners_user_email", "user_id", "email", unique=True),
+        Index("ix_partners_user_type", "user_id", "type"),
+    )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
     name: Mapped[str] = mapped_column(String(120))
@@ -198,6 +204,8 @@ class Contract(EntityMixin, Base):
     __table_args__ = (
         CheckConstraint("expected_amount >= 0", name="expected_amount_non_negative"),
         CheckConstraint("end_date IS NULL OR end_date >= start_date", name="date_range"),
+        Index("ix_contracts_user_status", "user_id", "status"),
+        Index("ix_contracts_user_end_date", "user_id", "end_date"),
     )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
@@ -219,6 +227,8 @@ class Transaction(EntityMixin, Base):
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
         UniqueConstraint("bank_account_id", "external_id", name="uq_transactions_account_external"),
+        Index("ix_transactions_user_date", "user_id", "date"),
+        Index("ix_transactions_user_account_category", "user_id", "bank_account_id", "category_id"),
     )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)

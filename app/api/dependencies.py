@@ -6,9 +6,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError
+from app.core.config import get_settings
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models import User, UserType
+from app.integrations.llm_provider import ResilientFinancialAnalysisProvider
 
 bearer = HTTPBearer(auto_error=False, description="Faça login e cole somente o access_token retornado.")
 Db = Annotated[Session, Depends(get_db)]
@@ -27,6 +29,10 @@ def get_current_user(db: Db, credentials: Annotated[HTTPAuthorizationCredentials
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_financial_analysis_provider():
+    return ResilientFinancialAnalysisProvider(get_settings())
 
 
 def require_company(user: User) -> None:
