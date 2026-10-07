@@ -7,6 +7,8 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+export const AI_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_AI_REQUEST_TIMEOUT_MS || 310000)
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('finchat_token')
   if (token) config.headers.Authorization = `Bearer ${token}`

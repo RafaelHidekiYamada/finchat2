@@ -34,14 +34,15 @@ As regras não simulam linguagem aleatória, não fazem recomendações de compr
 ```dotenv
 LLM_ENABLED=true
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=gemma3:4b
-OLLAMA_TIMEOUT_SECONDS=30
+OLLAMA_MODEL=gemma3:1b
+OLLAMA_TIMEOUT_SECONDS=300
+VITE_AI_REQUEST_TIMEOUT_MS=310000
 ```
 
 Instale o Ollama e execute uma vez:
 
 ```powershell
-ollama pull gemma3:4b
+ollama pull gemma3:1b
 ```
 
 No Docker Compose, o serviço `ollama-model` baixa o modelo automaticamente e a API usa `http://ollama:11434` dentro da rede dos containers. Os arquivos do modelo permanecem no volume `finchat_ollama_data`.

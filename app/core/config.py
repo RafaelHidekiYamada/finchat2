@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     llm_enabled: bool = True
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "gemma3:4b"
-    ollama_timeout_seconds: float = Field(default=30.0, ge=1.0, le=120.0)
+    ollama_model: str = "gemma3:1b"
+    ollama_timeout_seconds: float = Field(default=300.0, ge=1.0, le=600.0)
 
     @field_validator("secret_key")
     @classmethod

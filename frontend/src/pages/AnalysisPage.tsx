@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrainCircuit, CheckCircle2, Lightbulb, ShieldAlert, Sparkles } from 'lucide-react'
 import { Notice, PageHeader } from '../components/Ui'
-import { api, errorMessage } from '../services/api'
+import { AI_REQUEST_TIMEOUT_MS, api, errorMessage } from '../services/api'
 import type { Analysis, ApiSuccess } from '../types'
 
 export function AnalysisPage() {
@@ -15,7 +15,7 @@ export function AnalysisPage() {
     setBusy(true)
     setError('')
     try {
-      setData((await api.post<ApiSuccess<Analysis>>('/ai/financial-analysis', range)).data.data)
+      setData((await api.post<ApiSuccess<Analysis>>('/ai/financial-analysis', range, { timeout: AI_REQUEST_TIMEOUT_MS })).data.data)
     } catch (requestError) {
       setError(errorMessage(requestError))
     } finally {

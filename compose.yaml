@@ -12,8 +12,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       LLM_ENABLED: ${LLM_ENABLED:-true}
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:4b}
-      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-60}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:1b}
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-300}
       # SQLite SQL persistido no volume, independente do arquivo local.
       DATABASE_URL: sqlite:////app/data/finchat.db
       TZ: America/Sao_Paulo
@@ -29,6 +29,10 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+      OLLAMA_LOAD_TIMEOUT: 10m
+      OLLAMA_NUM_PARALLEL: 1
     ports:
       - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
     volumes:
@@ -44,7 +48,7 @@ services:
     image: ollama/ollama:latest
     environment:
       OLLAMA_HOST: http://ollama:11434
-    command: ["pull", "${OLLAMA_MODEL:-gemma3:4b}"]
+    command: ["pull", "${OLLAMA_MODEL:-gemma3:1b}"]
     depends_on:
       ollama:
         condition: service_healthy

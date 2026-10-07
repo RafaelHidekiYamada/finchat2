@@ -187,8 +187,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60
 CORS_ORIGINS=http://localhost:5173
 LLM_ENABLED=true
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=gemma3:4b
-OLLAMA_TIMEOUT_SECONDS=30
+OLLAMA_MODEL=gemma3:1b
+OLLAMA_TIMEOUT_SECONDS=300
+VITE_AI_REQUEST_TIMEOUT_MS=310000
 ```
 
 **A chave JWT acima é um marcador, não uma configuração utilizável.** `JWT_SECRET_KEY` é obrigatória, exige pelo menos 32 caracteres e não aceita marcadores conhecidos. `SECRET_KEY` continua aceito somente para compatibilidade com o CP1. `LLM_ENABLED=false` desativa apenas a tentativa de usar o Ollama; as regras determinísticas continuam funcionando.
@@ -196,7 +197,7 @@ OLLAMA_TIMEOUT_SECONDS=30
 Para executar sem Docker, instale o [Ollama](https://ollama.com/download), abra o aplicativo e baixe o modelo uma vez:
 
 ```powershell
-ollama pull gemma3:4b
+ollama pull gemma3:1b
 ```
 
 Se o Ollama não estiver instalado ou iniciado, a rota de análise continua respondendo por meio do fallback determinístico.
@@ -292,7 +293,7 @@ docker compose up -d --build --wait
 docker compose exec api python -m app.seed
 ```
 
-Na primeira execução, o comando também baixa o modelo `gemma3:4b`, o que pode levar alguns minutos. Depois ele constrói a API, aplica `alembic upgrade head`, inicia Uvicorn e aguarda o healthcheck. O segundo comando popula os dados fictícios de demonstração e pode ser repetido sem duplicação.
+Na primeira execução, o comando também baixa o modelo `gemma3:1b`, otimizado para uso local em CPU, o que pode levar alguns minutos. Depois ele constrói a API, aplica `alembic upgrade head`, inicia Uvicorn e aguarda o healthcheck. O segundo comando popula os dados fictícios de demonstração e pode ser repetido sem duplicação.
 
 - [Swagger no Docker](http://127.0.0.1:8080/docs)
 - [ReDoc no Docker](http://127.0.0.1:8080/redoc)

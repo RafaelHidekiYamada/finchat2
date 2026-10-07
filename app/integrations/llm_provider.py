@@ -147,6 +147,8 @@ class OllamaFinancialAnalysisProvider:
             "Você é o módulo de análise financeira educacional do FinChat. "
             "Analise somente os agregados fornecidos, não invente números e não recomende compra, "
             "venda ou investimento. Seja objetivo, prudente e use português do Brasil. "
+            "Preencha todos os campos como texto simples: não use Markdown, asteriscos, títulos ou listas dentro de uma string. "
+            "Limite financial_summary a três frases e cada lista a no máximo três itens curtos, sem repetir informações. "
             f"O campo disclaimer deve ser exatamente: {DISCLAIMER}"
         )
         response = httpx.post(

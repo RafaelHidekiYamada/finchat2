@@ -178,6 +178,8 @@ def test_ollama_recebe_schema_e_resposta_estruturada(monkeypatch):
     assert captured["json"]["model"] == "gemma3:4b"
     assert captured["json"]["stream"] is False
     assert captured["json"]["format"]["type"] == "object"
+    assert "não use Markdown" in captured["json"]["messages"][0]["content"]
+    assert "três frases" in captured["json"]["messages"][0]["content"]
     assert outcome.source == "ollama"
     assert outcome.content.financial_summary == "Resumo local validado."
 
