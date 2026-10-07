@@ -315,7 +315,7 @@ docker compose start --wait
 
 Para remover somente o container e a rede, use `docker compose down`; o volume e seus dados são preservados. **`docker compose down --volumes` também remove o banco**, portanto não o use para apenas parar a aplicação.
 
-No Docker Desktop, o projeto aparece em **Containers → finchat**, com o serviço `api`. O aplicativo permite consultar logs e parar/iniciar o serviço; as configurações já estão no `compose.yaml`. Se ocorrer erro de conexão com `dockerDesktopLinuxEngine`, abra o Docker Desktop e aguarde o mecanismo ficar pronto. Em máquinas ainda sem WSL 2 ou virtualização configurados, siga a configuração inicial solicitada pelo próprio Docker Desktop.
+No Docker Desktop, o projeto aparece em **Containers → finchat**, com os serviços `api`, `ollama` e `ollama-model`. O aplicativo permite consultar logs e parar/iniciar os serviços; as configurações já estão no `compose.yaml`. Se ocorrer erro de conexão com `dockerDesktopLinuxEngine`, abra o Docker Desktop e aguarde o mecanismo ficar pronto. Em máquinas ainda sem WSL 2 ou virtualização configurados, siga a configuração inicial solicitada pelo próprio Docker Desktop.
 
 O processo roda como usuário sem privilégios de administrador. `.env`, banco local, logs e `.venv` ficam fora da imagem. O seed é uma ação explícita, e não é executado automaticamente a cada reinício.
 
@@ -492,7 +492,6 @@ Erros seguem:
 | `409` | Conflito de unicidade ou recurso ainda em uso |
 | `422` | Payload ou parâmetro inválido |
 | `500` | Erro interno; detalhes técnicos não são expostos ao cliente |
-| `503` | LLM não configurada ou provedor temporariamente indisponível |
 
 ## 19. Executar os testes
 
@@ -503,9 +502,9 @@ npm.cmd test
 npm.cmd run build
 ```
 
-A suíte do backend usa banco isolado e não chama serviços externos: o provider de IA é substituído nos testes. Ela cobre CP1, dashboard, paginação, índices, vencimentos, sanitização da IA e falhas controladas. A validação CP2 aprovou **91 testes de backend**. O frontend aprovou **2 testes** de proteção de rota e renderização do dashboard; o build TypeScript/Vite valida a aplicação completa.
+A suíte do backend usa banco isolado e não chama serviços externos reais: o adaptador Ollama é simulado nos testes e o fallback determinístico é exercitado diretamente. Ela cobre CP1, dashboard, paginação, índices, vencimentos, sanitização da IA e falhas controladas. A validação CP2 aprovou **93 testes de backend**. O frontend aprovou **2 testes** de proteção de rota e renderização do dashboard; o build TypeScript/Vite valida a aplicação completa.
 
-Também são verificados migrations em SQLite temporário, seed idempotente, `/health`, Swagger, login, dashboard, CRUD financeiro, área CNPJ e erro de LLM sem chave. Consulte as evidências em `docs/evidencias/`.
+Também são verificados migrations em SQLite temporário, seed idempotente, `/health`, Swagger, login, dashboard, CRUD financeiro, área CNPJ, resposta estruturada do Ollama e fallback determinístico. Consulte as evidências em `docs/evidencias/` e a [auditoria de conformidade do CP2](docs/evidencias/auditoria_cp2_2026-10-06.md).
 
 O Docker continua executando a API sem root, com migrations automáticas e SQLite em volume. O frontend é executado separadamente nesta entrega.
 

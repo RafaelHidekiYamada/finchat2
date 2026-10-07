@@ -9,6 +9,7 @@ htmlcov/
 !.env.example
 *.db
 *.db-*
+*.db.*
 *.sqlite
 *.sqlite3
 *.log

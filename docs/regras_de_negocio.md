@@ -115,4 +115,4 @@ Sucesso usa `{ "message": "...", "data": ... }`. Erros usam `{ "error": { "code"
 
 ## 10. Limites desta fase
 
-Não há frontend, pagamento, consulta de titularidade, câmbio, conciliação bancária automática real, consulta Open Finance, envio de WhatsApp ou interpretação por LLM. PostgreSQL é configurável, mas a validação local usa SQLite. CP2 cobre a interface; CP3 poderá incorporar provedores oficiais, consentimento, notificações, relatórios e preparação para produção.
+O CP2 inclui frontend React, dashboard consolidado e análise financeira com Ollama local e fallback determinístico. Não há pagamento, consulta de titularidade, câmbio, conciliação bancária automática real, consulta Open Finance ou envio de WhatsApp. PostgreSQL é configurável, mas a validação local usa SQLite. O CP3 poderá incorporar provedores oficiais, consentimento, notificações, relatórios e preparação para produção.
