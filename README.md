@@ -503,7 +503,7 @@ npm.cmd test
 npm.cmd run build
 ```
 
-A suíte do backend usa banco isolado e não chama serviços externos reais: o adaptador Ollama é simulado nos testes e o fallback determinístico é exercitado diretamente. Ela cobre CP1, dashboard, paginação, índices, vencimentos, sanitização da IA e falhas controladas. A validação CP2 aprovou **93 testes de backend**. O frontend aprovou **2 testes** de proteção de rota e renderização do dashboard; o build TypeScript/Vite valida a aplicação completa.
+A suíte do backend usa banco isolado e não chama serviços externos reais: o adaptador Ollama é simulado nos testes e o fallback determinístico é exercitado diretamente. Ela cobre CP1, dashboard, paginação, índices, vencimentos, sanitização da IA e falhas controladas. A validação CP2 aprovou **93 testes de backend**. O frontend aprovou **3 testes** de proteção de rota, renderização do dashboard e navegação/logout responsivo; o build TypeScript/Vite valida a aplicação completa.
 
 Também são verificados migrations em SQLite temporário, seed idempotente, `/health`, Swagger, login, dashboard, CRUD financeiro, área CNPJ, resposta estruturada do Ollama e fallback determinístico. Consulte as evidências em `docs/evidencias/` e a [auditoria de conformidade do CP2](docs/evidencias/auditoria_cp2_2026-10-06.md).
 
